@@ -63,6 +63,7 @@ class TLDetector(object):
         '''
         sub3 = rospy.Subscriber('/vehicle/traffic_lights', TrafficLightArray, self.traffic_cb)
         sub6 = rospy.Subscriber('/image_color', Image, self.image_cb)
+        # enable/disable image recording for the use of training data
         if self.config['data_record_flag']:
             sub7 = rospy.Subscriber('/image_color', Image, self.record_training_data_callback, queue_size=1)
 
@@ -112,6 +113,34 @@ class TLDetector(object):
         rospy.logwarn("{:,} waypoints received from /base_waypoints.".format(self.waypoints_count))
 
     def traffic_cb(self, msg):
+        """
+        header:
+          seq: 0
+          stamp:
+            secs: 1512922907
+            nsecs: 189995050
+          frame_id: /world
+        pose:
+          header:
+            seq: 0
+            stamp:
+              secs: 1512922907
+              nsecs: 190005064
+            frame_id: /world
+          pose:
+            position:
+              x: 363.378
+              y: 1553.731
+              z: 5.606708
+            orientation:
+              x: 0.0
+              y: 0.0
+              z: -0.010369102606
+              w: 0.99994623941
+        state:
+          state: 0)
+        """
+        # print(['traffic_cb'], msg)
         self.lights = msg.lights
         if self.light_waypoints==[] and self.waypoints:
             # Create waypoints for the traffic signals and also the associated stop lines.
