@@ -63,7 +63,7 @@ class TLClassifier(object):
         prediction_labels = [TrafficLightState.GREEN, TrafficLightState.RED, TrafficLightState.YELLOW, TrafficLightState.UNKNOWN]
         labels_names = ['GREEN', 'RED', 'YELLOW', 'UNKNOWN']
 
-        print(prediction)
+        print('{:>5.3f} {:>5.3f} {:>5.3f} {:>5.3f}'.format(*prediction))
 
         light_state = prediction_labels[prediction.argmax()]
 
