@@ -13,7 +13,7 @@ class TLClassifier(object):
 
         # clear TF graph state
 
-       K.clear_session()
+        K.clear_session()
 
         model_arch_path = 'keras_model/squeezenet_transfer_learned_real_and_simulator_architecture.json'
         model_weights_path = 'keras_model/squeezenet_transfer_learned_real_and_simulator_weights.h5'
