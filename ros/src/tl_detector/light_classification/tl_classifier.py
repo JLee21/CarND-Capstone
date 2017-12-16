@@ -42,27 +42,37 @@ class TLClassifier(object):
         Returns:
             int: ID of traffic light color (specified in styx_msgs/TrafficLight)
 
-	"""
-	# resize OpenCV image to (227, x)
-	tic1 = time()
-	org_width, org_height = (600.0, 800.0)
-	resize_width, resize_height = (227, 227)
-	scale = resize_height / org_width
-	resized_img = cv2.resize(image, (resize_width,resize_height), fx=scale, fy=scale)
+    	"""
+    	# resize OpenCV image to (227, x)
+    	tic1 = time()
+    	org_width, org_height = (600.0, 800.0)
+    	resize_width, resize_height = (227, 227)
+    	scale = resize_height / org_width
+    	resized_img = cv2.resize(image, (resize_width,resize_height), fx=scale, fy=scale)
 
-	# crop image to (227,227) image
-	cropped_img = resized_img[0:227, 0:227]/255.0
-
-
-	tic = time()
-	prediction = self.model.predict(np.array([cropped_img]))[0]
-	toc = time()
-	rospy.logwarn('Inference Time - ' + str(toc-tic))
-	prediction_labels = [TrafficLightState.GREEN, TrafficLightState.RED, TrafficLightState.UNKNOWN, TrafficLightState.YELLOW]
-	labels_names = ['GREEN', 'RED', 'UNKNOWN','YELLOW']
+    	# crop image to (227,227) image
+    	cropped_img = resized_img[0:227, 0:227]/255.0
 
 
-	light_state = prediction_labels[prediction.argmax()]
+    	tic = time()
+    	prediction = self.model.predict(np.array([cropped_img]))[0]
+    	toc = time()
+    	# rospy.logwarn('Inference Time - ' + str(toc-tic))
+    	prediction_labels = [TrafficLightState.GREEN, TrafficLightState.RED, TrafficLightState.UNKNOWN, TrafficLightState.YELLOW]
+    	labels_names = ['GREEN', 'RED', 'UNKNOWN','YELLOW']
 
-	rospy.logwarn('Traffic Light Prediction - ' + labels_names[prediction.argmax()])
-	return light_state
+        # only get predictions that are above `thresh` level
+        thresh = 0.83 # decimal between 0-1
+        score = prediction[prediction.argmax()] # the top softmax output
+        if score > thresh:
+            light_state = prediction_labels[prediction.argmax()]
+            score_pass = True
+        else:
+            light_state = TrafficLightState.UNKNOWN
+            score_pass = False
+
+
+    	# rospy.logwarn('Traffic Light Prediction - ' + labels_names[prediction.argmax()])
+    	rospy.logwarn('TL Prediction - {:8} Softmax Score {:3.3f} Pass? {:}' \
+            .format(labels_names[prediction.argmax()], score, score_pass))
+    	return light_state

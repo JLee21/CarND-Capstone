@@ -12,6 +12,7 @@ import yaml
 import math
 from operator import itemgetter
 # record training images
+import time
 from time import sleep
 import uuid
 import os
@@ -27,6 +28,7 @@ class TLDetector(object):
                   TrafficLightState.YELLOW: 'YELLOW',
                   TrafficLightState.GREEN: 'GREEN',
                   TrafficLightState.UNKNOWN: 'UNKNOWN' }
+    labels_names = ['GREEN', 'RED', 'UNKNOWN','YELLOW']
 
     def __init__(self):
 
@@ -71,11 +73,13 @@ class TLDetector(object):
         if self.config['data_record_flag']:
             # folder housekeeping
             base_dir = 'training'
+
             if os.path.exists(os.path.abspath(base_dir)):
-                shutil.rmtree(os.path.abspath((base_dir))
+                shutil.rmtree(os.path.abspath((base_dir)))
+
             for _, light_state in self.state_txt.items():
                 light_dir = os.path.join(base_dir, light_state)
-                os.mkdir(light_dir)
+                os.makedirs(os.path.abspath(light_dir))
             # subscribe to image topic
             sub7 = rospy.Subscriber('/image_color', Image, self.record_training_data_callback, queue_size=1)
 
@@ -89,9 +93,9 @@ class TLDetector(object):
         rospy.spin()
 
     def record_training_data_callback(self, msg):
-        sec_to_sleep = 0.1
+        sec_to_sleep = 0.7
         light_wp, line_wp, state = self.process_traffic_lights()
-        print('[record_training_data_callback] state: ', state)
+        # print('[record_training_data_callback] state: ', state)
         try:
             # Convert your ROS Image message to OpenCV2
             cv2_img = self.bridge.imgmsg_to_cv2(msg, "bgr8")
@@ -103,22 +107,26 @@ class TLDetector(object):
             if state == 0:
                 # cv2.imwrite('training/red/red_image_raw%s.jpeg' % (str(uuid.uuid4())), cv2_img)
                 # cv2.imwrite('training/red/red_image_resize%s.jpeg' % (str(uuid.uuid4())), resize_image)
-                cv2.imwrite('training/red/red_image_crop_%s.jpeg' % (str(uuid.uuid4())), cropped_image)
+                cv2.imwrite('training/RED/red_image_crop_%s.jpeg' % (str(int(time.time()*100))), cropped_image)
+                print('{0:10} image written at time {1}'.format('RED', time.strftime('%H:%M:%S')))
                 sleep(sec_to_sleep)
             if state == 1:
                 # cv2.imwrite('training/yellow/yellow_image_raw%s.jpeg' % (str(uuid.uuid4())), cv2_img)
                 # cv2.imwrite('training/yellow/yellow_image_resize%s.jpeg' % (str(uuid.uuid4())), resize_image)
-                cv2.imwrite('training/yellow/yellow_image_crop_%s.jpeg' % (str(uuid.uuid4())), cropped_image)
+                cv2.imwrite('training/YELLOW/yellow_image_crop_%s.jpeg' % (str(int(time.time()*100))), cropped_image)
+                print('{0:10} image written at time {1}'.format('YELLOW', time.strftime('%H:%M:%S')))
                 sleep(sec_to_sleep)
             if state == 2:
                 # cv2.imwrite('training/green/green_image_raw%s.jpeg' % (str(uuid.uuid4())), cv2_img)
                 # cv2.imwrite('training/green/green_image_resize%s.jpeg' % (str(uuid.uuid4())), resize_image)
-                cv2.imwrite('training/green/green_image_crop_%s.jpeg' % (str(uuid.uuid4())), cropped_image)
+                cv2.imwrite('training/GREEN/green_image_crop_%s.jpeg' % (str(int(time.time()*100))), cropped_image)
+                print('{0:10} image written at time {1}'.format('GREEN', time.strftime('%H:%M:%S')))
                 sleep(sec_to_sleep)
             if state == 4:
                 # cv2.imwrite('training/unknown/unknown_image_raw%s.jpeg' % (str(uuid.uuid4())), cv2_img)
                 # cv2.imwrite('training/unknown/unknown_image_resize%s.jpeg' % (str(uuid.uuid4())), resize_image)
-                cv2.imwrite('training/unknown/unknown_image_crop_%s.jpeg' % (str(uuid.uuid4())), cropped_image)
+                cv2.imwrite('training/UNKNOWN/unknown_image_crop_%s.jpeg' % (str(int(time.time()*100))), cropped_image)
+                print('{0:10} image written at time {1}'.format('UNKNOWN', time.strftime('%H:%M:%S')))
                 sleep(sec_to_sleep)
 
     def pose_cb(self, msg):
@@ -257,6 +265,10 @@ class TLDetector(object):
         """
         if(self.pose):
             car_position = self.get_closest_waypoint(self.pose.pose)
+        # somtimes, car_position DNE
+        else:
+            return -1, -1, TrafficLightState.UNKNOWN
+
 
         # find the closest visible traffic light (if one exists)
         if self.rot==1:
